@@ -1,5 +1,17 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -12,31 +24,21 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   aspectRatioOptions,
   creditFee,
   defaultValues,
   transformationTypes,
 } from "@/constants";
-import { addImage, updateImage } from "@/lib/actions/image.actions";
-import { updateCredits } from "@/lib/actions/user.actions";
-import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { getCldImageUrl } from "next-cloudinary";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { CustomField } from "./CustomField";
-import { InsufficientCreditsModal } from "./InsufficientCreditsModal";
+import { useEffect, useState, useTransition } from "react";
+import { AspectRatioKey, debounce, deepMergeObjects } from "@/lib/utils";
 import MediaUploader from "./MediaUploader";
 import TransformedImage from "./TransformedImage";
+import { updateCredits } from "@/lib/actions/user.actions";
+import { getCldImageUrl } from "next-cloudinary";
+import { addImage, updateImage } from "@/lib/actions/image.actions";
+import { useRouter } from "next/navigation";
+import { InsufficientCreditsModal } from "./InsufficientCreditsModal";
 
 export const formSchema = z.object({
   title: z.string(),
@@ -56,7 +58,7 @@ const TransformationForm = ({
 }: TransformationFormProps) => {
   const transformationType = transformationTypes[type];
   const [image, setImage] = useState(data);
-  const [newTransformation, setnewTransformation] =
+  const [newTransformation, setNewTransformation] =
     useState<Transformations | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTransforming, setIsTransforming] = useState(false);
@@ -133,7 +135,7 @@ const TransformationForm = ({
               _id: data._id,
             },
             userId,
-            path: `/tranformations/${data._id}`,
+            path: `/transformations/${data._id}`,
           });
 
           if (updatedImage) {
@@ -153,13 +155,15 @@ const TransformationForm = ({
     onChangeField: (value: string) => void
   ) => {
     const imageSize = aspectRatioOptions[value as AspectRatioKey];
+
     setImage((prevState: any) => ({
       ...prevState,
       aspectRatio: imageSize.aspectRatio,
       width: imageSize.width,
       height: imageSize.height,
     }));
-    setnewTransformation(transformationType.config);
+
+    setNewTransformation(transformationType.config);
 
     return onChangeField(value);
   };
@@ -171,7 +175,7 @@ const TransformationForm = ({
     onChangeField: (value: string) => void
   ) => {
     debounce(() => {
-      setnewTransformation((prevState: any) => ({
+      setNewTransformation((prevState: any) => ({
         ...prevState,
         [type]: {
           ...prevState?.[type],
@@ -185,11 +189,12 @@ const TransformationForm = ({
 
   const onTransformHandler = async () => {
     setIsTransforming(true);
+
     setTransformationConfig(
       deepMergeObjects(newTransformation, transformationConfig)
     );
 
-    setnewTransformation(null);
+    setNewTransformation(null);
 
     startTransition(async () => {
       await updateCredits(userId, creditFee);
@@ -198,7 +203,7 @@ const TransformationForm = ({
 
   useEffect(() => {
     if (image && (type === "restore" || type === "removeBackground")) {
-      setnewTransformation(transformationType.config);
+      setNewTransformation(transformationType.config);
     }
   }, [image, transformationType.config, type]);
 
@@ -213,6 +218,7 @@ const TransformationForm = ({
           className="w-full"
           render={({ field }) => <Input {...field} className="input-field" />}
         />
+
         {type === "fill" && (
           <CustomField
             control={form.control}
@@ -324,18 +330,19 @@ const TransformationForm = ({
             disabled={isTransforming || newTransformation === null}
             onClick={onTransformHandler}
           >
-            {isTransforming ? "Transforming..." : "Apply transformation"}
+            {isTransforming ? "Transforming..." : "Apply Transformation"}
           </Button>
           <Button
             type="submit"
             className="submit-button capitalize"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Submitting" : "Save Image"}
+            {isSubmitting ? "Submitting..." : "Save Image"}
           </Button>
         </div>
       </form>
     </Form>
   );
 };
+
 export default TransformationForm;

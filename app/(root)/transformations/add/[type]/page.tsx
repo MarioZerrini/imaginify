@@ -11,13 +11,14 @@ const AddTransformationTypePage = async ({
   const { userId } = auth();
   const transformation = transformationTypes[type];
 
-  if (!userId) redirect("sign-in");
+  if (!userId) redirect("/sign-in");
 
-  // we need the id of the user in the database not that of clerk
   const user = await getUserById(userId);
+
   return (
     <>
       <Header title={transformation.title} subtitle={transformation.subTitle} />
+
       <section className="mt-10">
         <TransformationForm
           action="Add"
@@ -29,4 +30,5 @@ const AddTransformationTypePage = async ({
     </>
   );
 };
+
 export default AddTransformationTypePage;
